@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Gateway Simulator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section h2 {
+            color: #333;
+            font-size: 18px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            color: #555;
+            font-size: 14px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .response {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .response.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .response.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .response pre {
+            margin-top: 10px;
+            background: rgba(0, 0, 0, 0.05);
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+
+        .tab-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 10px;
+            background: #f0f0f0;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .tab-button.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-processing {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-failed {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💳 Payment Gateway Simulator</h1>
+            <p>Test payment flows, refunds, and merchant management</p>
+        </div>
+
+        <div class="tab-buttons">
+            <button class="tab-button active" onclick="switchTab('merchant')">Merchant</button>
+            <button class="tab-button" onclick="switchTab('payment')">Payment</button>
+            <button class="tab-button" onclick="switchTab('refund')">Refund</button>
+            <button class="tab-button" onclick="switchTab('status')">Status</button>
+        </div>
+
+        <!-- Merchant Tab -->
+        <div id="merchant-tab" class="tab-content active">
+            <div class="section">
+                <h2>Create Merchant</h2>
+                <form id="merchant-form">
+                    <div class="form-group">
+                        <label for="merchant-id">Merchant ID</label>
+                        <input type="text" id="merchant-id" placeholder="e.g., MERCHANT_001" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="merchant-name">Merchant Name</label>
+                        <input type="text" id="merchant-name" placeholder="e.g., Amazon India" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="merchant-email">Email</label>
+                        <input type="email" id="merchant-email" placeholder="e.g., merchant@example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="callback-url">Callback URL</label>
+                        <input type="url" id="callback-url" value="http://localhost:8080/api/merchant/callback" required>
+                    </div>
+                    <button type="submit">Create Merchant</button>
+                </form>
+                <div id="merchant-response" class="response"></div>
+            </div>
+        </div>
+
+        <!-- Payment Tab -->
+        <div id="payment-tab" class="tab-content">
+            <div class="section">
+                <h2>Initiate Payment</h2>
+                <form id="payment-form">
+                    <div class="form-group">
+                        <label for="pay-merchant-id">Merchant ID</label>
+                        <input type="text" id="pay-merchant-id" placeholder="e.g., MERCHANT_001" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="order-id">Order ID</label>
+                        <input type="text" id="order-id" placeholder="e.g., ORDER_12345" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="amount">Amount (INR)</label>
+                        <input type="number" id="amount" step="0.01" placeholder="e.g., 1500.00" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="payment-method">Payment Method</label>
+                        <select id="payment-method" required>
+                            <option value="CREDIT_CARD">Credit Card</option>
+                            <option value="DEBIT_CARD">Debit Card</option>
+                            <option value="UPI">UPI</option>
+                            <option value="NET_BANKING">Net Banking</option>
+                            <option value="WALLET">Wallet</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="description">Description (Optional)</label>
+                        <textarea id="description" rows="2" placeholder="e.g., Purchase of electronics"></textarea>
+                    </div>
+                    <button type="submit">Initiate Payment</button>
+                </form>
+                <div id="payment-response" class="response"></div>
+            </div>
+        </div>
+
+        <!-- Refund Tab -->
+        <div id="refund-tab" class="tab-content">
+            <div class="section">
+                <h2>Initiate Refund</h2>
+                <form id="refund-form">
+                    <div class="form-group">
+                        <label for="refund-txn-id">Transaction ID</label>
+                        <input type="text" id="refund-txn-id" placeholder="e.g., TXN_1699456789_abc123" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="refund-amount">Refund Amount</label>
+                        <input type="number" id="refund-amount" step="0.01" placeholder="e.g., 500.00" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="refund-reason">Reason</label>
+                        <textarea id="refund-reason" rows="2" placeholder="e.g., Customer requested refund" required></textarea>
+                    </div>
+                    <button type="submit">Initiate Refund</button>
+                </form>
+                <div id="refund-response" class="response"></div>
+            </div>
+        </div>
+
+        <!-- Status Tab -->
+        <div id="status-tab" class="tab-content">
+            <div class="section">
+                <h2>Check Payment Status</h2>
+                <form id="status-form">
+                    <div class="form-group">
+                        <label for="status-txn-id">Transaction ID</label>
+                        <input type="text" id="status-txn-id" placeholder="e.g., TXN_1699456789_abc123" required>
+                    </div>
+                    <button type="submit">Check Status</button>
+                </form>
+                <div id="status-response" class="response"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080/api';
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+        }
+
+        function showResponse(elementId, success, message, data = null) {
+            const responseEl = document.getElementById(elementId);
+            responseEl.className = `response ${success ? 'success' : 'error'}`;
+            responseEl.innerHTML = `
+                <strong>${success ? '✅ Success' : '❌ Error'}</strong><br>
+                ${message}
+                ${data ? `<pre>${JSON.stringify(data, null, 2)}</pre>` : ''}
+            `;
+            responseEl.style.display = 'block';
+        }
+
+        // Merchant Form
+        document.getElementById('merchant-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const data = {
+                merchantId: document.getElementById('merchant-id').value,
+                name: document.getElementById('merchant-name').value,
+                email: document.getElementById('merchant-email').value,
+                callbackUrl: document.getElementById('callback-url').value
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/merchants`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showResponse('merchant-response', true, 'Merchant created successfully!', result);
+                } else {
+                    showResponse('merchant-response', false, result.message || 'Failed to create merchant', result);
+                }
+            } catch (error) {
+                showResponse('merchant-response', false, error.message);
+            }
+        });
+
+        // Payment Form
+        document.getElementById('payment-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const data = {
+                merchantId: document.getElementById('pay-merchant-id').value,
+                orderId: document.getElementById('order-id').value,
+                amount: parseFloat(document.getElementById('amount').value),
+                currency: 'INR',
+                paymentMethod: document.getElementById('payment-method').value,
+                description: document.getElementById('description').value
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/payments/initiate`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showResponse('payment-response', true, 
+                        'Payment initiated! Processing in background (2-5 seconds)...', result);
+                } else {
+                    showResponse('payment-response', false, result.message || 'Failed to initiate payment', result);
+                }
+            } catch (error) {
+                showResponse('payment-response', false, error.message);
+            }
+        });
+
+        // Refund Form
+        document.getElementById('refund-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const txnId = document.getElementById('refund-txn-id').value;
+            const data = {
+                amount: parseFloat(document.getElementById('refund-amount').value),
+                reason: document.getElementById('refund-reason').value
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/payments/refund/${txnId}`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showResponse('refund-response', true, 
+                        'Refund initiated! Processing in background (~2 seconds)...', result);
+                } else {
+                    showResponse('refund-response', false, result.message || 'Failed to initiate refund', result);
+                }
+            } catch (error) {
+                showResponse('refund-response', false, error.message);
+            }
+        });
+
+        // Status Form
+        document.getElementById('status-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const txnId = document.getElementById('status-txn-id').value;
+
+            try {
+                const response = await fetch(`${API_BASE}/payments/status/${txnId}`);
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showResponse('status-response', true, 'Payment status retrieved', result);
+                } else {
+                    showResponse('status-response', false, result.message || 'Failed to get status', result);
+                }
+            } catch (error) {
+                showResponse('status-response', false, error.message);
+            }
+        });
+    </script>
+</body>
+</html>
+
